@@ -1,0 +1,79 @@
+package com.bookstore.dao;
+
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bookstore.entity.Book;
+
+@Transactional
+@Repository
+public class BookStoreDAOImpl implements BookStoreDAO {
+	
+	@PersistenceContext
+	private EntityManager entityManager;
+    @Override
+	public List<Book> getBooks() {
+		
+		String sql = "SELECT * FROM Book  ORDER BY Book.id";
+		return (List<Book>) entityManager.createQuery(sql).getResultList();
+	}
+	
+	@Override
+	public Book getBook(int bookId) {
+		
+		return entityManager.find(Book.class, bookId);
+	}
+
+	
+	@Override
+	public Book insertBook(Book book) {
+		entityManager.persist(book);
+		Book b = getLastInsertedBook();
+		return b;
+	}
+
+	@Override
+	public Book updateBook(int bookId, Book book) {
+		
+		
+		Book book = getBook(bookId);
+		book.setName(book.getbookName());
+		book.setAuthor(book.getbookAuthor());
+		book.setPublication(book.getPublication());
+		
+		
+		entityManager.flush();
+		
+		Book updatedBook = getBook(bookId);
+		
+		return updatedBook;
+	}
+
+	
+	@Override
+	public boolean deleteBook(int bookId) {
+		Book book = getBook(bookId);
+		entityManager.remove(book);
+		
+		boolean present = entityManager.contains(book);
+		if(present){
+			return false;
+		}
+		return true;
+	}
+	
+	
+	private Book getLastInsertedBook(){
+		String sql= "from Book order by id DESC";
+		Query query = entityManager.createQuery(sql);
+		Book book = (Book)query.getSingleResult();
+		return book;
+	}
+
+}
